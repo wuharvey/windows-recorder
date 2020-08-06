@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using CommandLine;
 
 namespace TestConsoleApp
 {
@@ -15,7 +16,36 @@ namespace TestConsoleApp
     {
         private static bool _isRecording;
         private static Stopwatch _stopWatch;
+
+        public class Options
+        {
+            [Option(Required = false)]
+            public int Top { get; set; }
+
+            [Option(Required = false)]
+            public int Bottom { get; set; }
+
+            [Option(Required = false)]
+            public int Left { get; set; }
+
+            [Option(Required = false)]
+            public int Right { get; set; }
+
+            [Option(Default = true)]
+            public bool Audio_enabled { get; set; }
+
+            [Option(Required = true)]
+            public string Path { get; set; }
+        }
+
         static void Main(string[] args)
+        {
+            CommandLine.Parser.Default.ParseArguments<Options>(args)
+                .WithParsed(Run);
+        }
+
+
+        static void Run(Options cmd_opts)
         {
             //This is how you can select audio devices. If you want the system default device,
             //just leave the AudioInputDevice or AudioOutputDevice properties unset or pass null or empty string.
@@ -23,16 +53,23 @@ namespace TestConsoleApp
             var audioOutputDevices = Recorder.GetSystemAudioDevices(AudioDeviceSource.OutputDevices);
             string selectedAudioInputDevice = audioInputDevices.Count > 0 ? audioInputDevices.First().Key : null;
             string selectedAudioOutputDevice = audioOutputDevices.Count > 0 ? audioOutputDevices.First().Key : null;
-            
+
             var opts = new RecorderOptions
             {
                 AudioOptions = new AudioOptions
                 {
                     AudioInputDevice = selectedAudioInputDevice,
-                    AudioOutputDevice= selectedAudioOutputDevice,
-                    IsAudioEnabled = true,
+                    AudioOutputDevice = selectedAudioOutputDevice,
+                    IsAudioEnabled = cmd_opts.Audio_enabled,
                     IsInputDeviceEnabled = true,
                     IsOutputDeviceEnabled = true,
+                },
+                DisplayOptions = new DisplayOptions
+                {
+                    Top = cmd_opts.Top,
+                    Bottom = cmd_opts.Bottom,
+                    Left = cmd_opts.Left,
+                    Right = cmd_opts.Right,
                 }
             };
 
@@ -40,20 +77,8 @@ namespace TestConsoleApp
             rec.OnRecordingFailed += Rec_OnRecordingFailed;
             rec.OnRecordingComplete += Rec_OnRecordingComplete;
             rec.OnStatusChanged += Rec_OnStatusChanged;
-            Console.WriteLine("Press ENTER to start recording or ESC to exit");
-            while (true)
-            {
-                ConsoleKeyInfo info = Console.ReadKey(true);
-                if (info.Key == ConsoleKey.Enter)
-                {
-                    break;
-                }
-                else if (info.Key == ConsoleKey.Escape)
-                {
-                    return;
-                }
-            }
-            rec.Record(Path.ChangeExtension(Path.GetTempFileName(), ".mp4"));
+            
+            rec.Record(cmd_opts.Path);
             CancellationTokenSource cts = new CancellationTokenSource();
             var token = cts.Token;
             Task.Run(async () =>
