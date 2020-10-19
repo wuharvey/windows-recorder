@@ -31,8 +31,8 @@ namespace TestConsoleApp
             [Option(Required = false)]
             public int Right { get; set; }
 
-            [Option(Default = true)]
-            public bool Audio_enabled { get; set; }
+            [Option()]
+            public bool Audio_disabled { get; set; }
 
             [Option(Required = true)]
             public string Path { get; set; }
@@ -60,7 +60,7 @@ namespace TestConsoleApp
                 {
                     AudioInputDevice = selectedAudioInputDevice,
                     AudioOutputDevice = selectedAudioOutputDevice,
-                    IsAudioEnabled = cmd_opts.Audio_enabled,
+                    IsAudioEnabled = cmd_opts.Audio_disabled == false,
                     IsInputDeviceEnabled = true,
                     IsOutputDeviceEnabled = true,
                 },
@@ -99,17 +99,15 @@ namespace TestConsoleApp
             }, token);
             while (true)
             {
-                ConsoleKeyInfo info = Console.ReadKey(true);
-                if (info.Key == ConsoleKey.Escape)
+                string info = Console.ReadLine();
+                if (info == "stop")
                 {
                     break;
                 }
             }
             cts.Cancel();
             rec.Stop();
-            Console.WriteLine();
-
-            Console.ReadKey();
+            Console.ReadLine();
         }
 
         private static void Rec_OnStatusChanged(object sender, RecordingStatusEventArgs e)
@@ -124,7 +122,7 @@ namespace TestConsoleApp
                     _stopWatch.Start();
                     _isRecording = true;
                     Console.WriteLine("Recording started");
-                    Console.WriteLine("Press ESC to stop recording");
+                    Console.WriteLine("Enter 'stop' to stop recording");
                     break;
                 case RecorderStatus.Paused:
                     Console.WriteLine("Recording paused");
@@ -142,8 +140,6 @@ namespace TestConsoleApp
             Console.WriteLine("Recording completed");
             _isRecording = false;
             _stopWatch?.Stop();
-            Console.WriteLine(String.Format("File: {0}", e.FilePath));
-            Console.WriteLine();
             Console.WriteLine("Press any key to exit");
         }
 
