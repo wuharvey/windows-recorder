@@ -102,11 +102,20 @@ namespace TestConsoleApp
                 string info = Console.ReadLine();
                 if (info == "stop")
                 {
+                    cts.Cancel();
+                    rec.Stop();
                     break;
                 }
+                else if (info == "pause") 
+                {
+                    rec.Pause();
+                }
+                else if (info == "resume")
+                {
+                    rec.Resume();
+                }
             }
-            cts.Cancel();
-            rec.Stop();
+
             Console.ReadLine();
         }
 
