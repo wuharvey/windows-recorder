@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Nuget\ScreenRecorderLib.targets = Nuget\ScreenRecorderLib.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "TestConsoleApp\TestConsoleApp.csproj", "{FDA56BBE-5019-47C5-AF1E-386D123C02E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dropbox Capture", "TestConsoleApp\Dropbox Capture.csproj", "{FDA56BBE-5019-47C5-AF1E-386D123C02E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{7199CBA5-ACDD-4751-B819-F74C5211EDE1}"
 EndProject
