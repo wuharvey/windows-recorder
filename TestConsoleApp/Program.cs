@@ -44,8 +44,7 @@ namespace TestConsoleApp
                 .WithParsed(Run);
         }
 
-
-        static void Run(Options cmd_opts)
+        private static RecorderOptions GetRecorderOptions(Options cmd_opts)
         {
             //This is how you can select audio devices. If you want the system default device,
             //just leave the AudioInputDevice or AudioOutputDevice properties unset or pass null or empty string.
@@ -73,36 +72,53 @@ namespace TestConsoleApp
                 }
             };
 
-            Recorder rec = Recorder.CreateRecorder(opts);
+            return opts;
+
+        }
+
+        static void Run(Options cmd_opts)
+        {
+            Recorder rec = Recorder.CreateRecorder(GetRecorderOptions(cmd_opts));
             rec.OnRecordingFailed += Rec_OnRecordingFailed;
             rec.OnRecordingComplete += Rec_OnRecordingComplete;
             rec.OnStatusChanged += Rec_OnStatusChanged;
-            
-            rec.Record(cmd_opts.Path);
-            CancellationTokenSource cts = new CancellationTokenSource();
-            var token = cts.Token;
-            Task.Run(async () =>
+            Console.Write("Initialized");
+            while (true)
             {
-                while (true)
-                {
-                    if (token.IsCancellationRequested)
-                        return;
-                    if (_isRecording)
+                string line = Console.ReadLine();
+                string[] cmd = line.Split(':');
+                Console.Write(line);
+
+                if (cmd[0] == "set_options") {
+                    rec.SetOptions(GetRecorderOptions(new Options
                     {
-                        Dispatcher.CurrentDispatcher.Invoke(() =>
-                        {
-                            Console.Write(String.Format("\rElapsed: {0}s:{1}ms", _stopWatch.Elapsed.Seconds, _stopWatch.Elapsed.Milliseconds));
-                        });
-                    }
-                    await Task.Delay(10);
+                        Top = Int32.Parse(cmd[1]),
+                        Bottom = Int32.Parse(cmd[2]),
+                        Left = Int32.Parse(cmd[3]),
+                        Right = Int32.Parse(cmd[4]),
+                        Audio_disabled = Boolean.Parse(cmd[5])
+                    }));
+                    rec.Record(cmd_opts.Path);
+                    break;
+                } else if (cmd[0] == "start")
+                {
+                    Console.Write(cmd);
+                    Console.Write(cmd.Length);
+
+                    rec.SetOptions(GetRecorderOptions(new Options
+                    {
+                        Audio_disabled = Boolean.Parse(cmd[1])
+                    }));
+                    rec.Record(cmd_opts.Path);
+                    break;
                 }
-            }, token);
+            }
+
             while (true)
             {
                 string info = Console.ReadLine();
                 if (info == "stop")
                 {
-                    cts.Cancel();
                     rec.Stop();
                     break;
                 }
@@ -114,6 +130,7 @@ namespace TestConsoleApp
                 {
                     rec.Resume();
                 }
+                Task.Delay(100);
             }
 
             Console.ReadLine();
@@ -127,11 +144,8 @@ namespace TestConsoleApp
                     //Console.WriteLine("Recorder is idle");
                     break;
                 case RecorderStatus.Recording:
-                    _stopWatch = new Stopwatch();
-                    _stopWatch.Start();
                     _isRecording = true;
                     Console.WriteLine("Recording started");
-                    Console.WriteLine("Enter 'stop' to stop recording");
                     break;
                 case RecorderStatus.Paused:
                     Console.WriteLine("Recording paused");
@@ -148,7 +162,6 @@ namespace TestConsoleApp
         {
             Console.WriteLine("Recording completed");
             _isRecording = false;
-            _stopWatch?.Stop();
             Console.WriteLine("Press any key to exit");
         }
 
@@ -156,7 +169,6 @@ namespace TestConsoleApp
         {
             Console.WriteLine("Recording failed with: " + e.Error);
             _isRecording = false;
-            _stopWatch?.Stop();
             Console.WriteLine();
             Console.WriteLine("Press any key to exit");
         }
