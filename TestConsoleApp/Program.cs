@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Windows.Threading;
 using CommandLine;
 
@@ -31,6 +32,9 @@ namespace TestConsoleApp
             [Option(Required = false)]
             public int Right { get; set; }
 
+            [Option(Required = false)]
+            public string Display_name { get; set; }
+
             [Option()]
             public bool Audio_disabled { get; set; }
 
@@ -53,6 +57,10 @@ namespace TestConsoleApp
             string selectedAudioInputDevice = audioInputDevices.Count > 0 ? audioInputDevices.First().Key : null;
             string selectedAudioOutputDevice = audioOutputDevices.Count > 0 ? audioOutputDevices.First().Key : null;
 
+            // Default to primary display, but allow overriding using CLI opt
+            string defaultDisplayName = System.Windows.Forms.Screen.PrimaryScreen.DeviceName;
+            string selectedDisplayName = string.IsNullOrEmpty(cmd_opts.Display_name) ? defaultDisplayName : cmd_opts.Display_name;
+
             var opts = new RecorderOptions
             {
                 AudioOptions = new AudioOptions
@@ -69,6 +77,7 @@ namespace TestConsoleApp
                     Bottom = cmd_opts.Bottom,
                     Left = cmd_opts.Left,
                     Right = cmd_opts.Right,
+                    MonitorDeviceName = selectedDisplayName
                 }
             };
 
@@ -89,25 +98,29 @@ namespace TestConsoleApp
                 string[] cmd = line.Split(':');
                 Console.Write(line);
 
-                if (cmd[0] == "set_options") {
+                if (cmd[0] == "set_options")
+                {
                     rec.SetOptions(GetRecorderOptions(new Options
                     {
                         Top = Int32.Parse(cmd[1]),
                         Bottom = Int32.Parse(cmd[2]),
                         Left = Int32.Parse(cmd[3]),
                         Right = Int32.Parse(cmd[4]),
-                        Audio_disabled = Boolean.Parse(cmd[5])
+                        Audio_disabled = Boolean.Parse(cmd[5]),
+                        Display_name = cmd[6]
                     }));
                     rec.Record(cmd_opts.Path);
                     break;
-                } else if (cmd[0] == "start")
+                }
+                else if (cmd[0] == "start")
                 {
                     Console.Write(cmd);
                     Console.Write(cmd.Length);
 
                     rec.SetOptions(GetRecorderOptions(new Options
                     {
-                        Audio_disabled = Boolean.Parse(cmd[1])
+                        Audio_disabled = Boolean.Parse(cmd[1]),
+                        Display_name = cmd[2]
                     }));
                     rec.Record(cmd_opts.Path);
                     break;
@@ -122,7 +135,7 @@ namespace TestConsoleApp
                     rec.Stop();
                     break;
                 }
-                else if (info == "pause") 
+                else if (info == "pause")
                 {
                     rec.Pause();
                 }
