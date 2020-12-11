@@ -38,6 +38,9 @@ namespace TestConsoleApp
             [Option()]
             public bool Audio_disabled { get; set; }
 
+            [Option(Required = false)]
+            public string Audio_input_device { get; set; }
+
             [Option(Required = true)]
             public string Path { get; set; }
         }
@@ -54,7 +57,7 @@ namespace TestConsoleApp
             //just leave the AudioInputDevice or AudioOutputDevice properties unset or pass null or empty string.
             var audioInputDevices = Recorder.GetSystemAudioDevices(AudioDeviceSource.InputDevices);
             var audioOutputDevices = Recorder.GetSystemAudioDevices(AudioDeviceSource.OutputDevices);
-            string selectedAudioInputDevice = audioInputDevices.Count > 0 ? audioInputDevices.First().Key : null;
+            string selectedAudioInputDevice = cmd_opts.Audio_input_device ?? (audioInputDevices.Count > 0 ? audioInputDevices.First().Key : null);
             string selectedAudioOutputDevice = audioOutputDevices.Count > 0 ? audioOutputDevices.First().Key : null;
 
             // Default to primary display, but allow overriding using CLI opt
@@ -107,7 +110,8 @@ namespace TestConsoleApp
                         Left = Int32.Parse(cmd[3]),
                         Right = Int32.Parse(cmd[4]),
                         Audio_disabled = Boolean.Parse(cmd[5]),
-                        Display_name = cmd[6]
+                        Display_name = cmd[6] ?? "",
+                        Audio_input_device = cmd[7] ?? ""
                     }));
                     rec.Record(cmd_opts.Path);
                     break;
@@ -120,10 +124,15 @@ namespace TestConsoleApp
                     rec.SetOptions(GetRecorderOptions(new Options
                     {
                         Audio_disabled = Boolean.Parse(cmd[1]),
-                        Display_name = cmd[2]
+                        Display_name = cmd[2] ?? "",
+                        Audio_input_device = cmd[3] ?? ""
                     }));
                     rec.Record(cmd_opts.Path);
                     break;
+                }
+                else if (cmd[0] == "list_audio_devices")
+                {
+                    Rec_ListAudioInputDevices();
                 }
             }
 
@@ -184,6 +193,14 @@ namespace TestConsoleApp
             _isRecording = false;
             Console.WriteLine();
             Console.WriteLine("Press any key to exit");
+        }
+
+        private static void Rec_ListAudioInputDevices()
+        {
+            var audioInputDevices = Recorder.GetSystemAudioDevices(AudioDeviceSource.InputDevices);
+            var devicesStr = string.Join(",", audioInputDevices.Select(x => "\"" + x.Key + "\":\"" + x.Value + "\""));
+            // var devicesStr = JsonConvert.SerializeObject(audioInputDevices);
+            Console.WriteLine("list_audio_devices_start{" + devicesStr + "}list_audio_devices_end");
         }
     }
 }
